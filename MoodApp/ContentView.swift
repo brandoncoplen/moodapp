@@ -19,7 +19,7 @@ struct ContentView: View {
     @Query private var items: [Item]
 
     // Tab selection
-    enum Tab: Int { case home, feed, map, playlists }
+    enum Tab: Int { case home, feed, map, connect }
     @State private var selectedTab: Tab = .home
 
     // Placeholder feed data
@@ -110,8 +110,8 @@ struct ContentView: View {
                 case .map:
                     WeeklyMoodMapView()
                         .padding(.bottom, tabBarHeight)
-                case .playlists:
-                    PlaylistsView()
+                case .connect:
+                    ConnectAccountsView()
                         .padding(.bottom, tabBarHeight)
                 }
             }
@@ -131,8 +131,8 @@ struct ContentView: View {
                         tabBarIcon("clock", selected: selectedTab == .map)
                     }
                     Spacer()
-                    Button(action: { selectedTab = .playlists }) {
-                        tabBarIcon("person", selected: selectedTab == .playlists)
+                    Button(action: { selectedTab = .connect }) {
+                        tabBarIcon("person.crop.circle.badge.plus", selected: selectedTab == .connect)
                     }
                 }
                 .frame(height: tabBarHeight)
