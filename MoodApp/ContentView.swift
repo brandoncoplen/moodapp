@@ -8,53 +8,136 @@
 import SwiftUI
 import SwiftData
 
+struct FeedItem: Identifiable {
+    let id = UUID()
+    let title: String
+    let subtitle: String
+}
+
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
 
+    // Tab selection
+    enum Tab: Int { case home, feed, map, playlists }
+    @State private var selectedTab: Tab = .home
+
+    // Placeholder feed data
+    let feedItems: [FeedItem] = [
+        FeedItem(title: "Finance / Education", subtitle: "Video Title 1"),
+        FeedItem(title: "Finance / Education", subtitle: "Video Title 2"),
+        FeedItem(title: "Finance / Education", subtitle: "Video Title 3")
+    ]
+
+    // Tab bar height constant
+    private let tabBarHeight: CGFloat = 60
+
+    // Helper for tab Bar icons
+    private func tabBarIcon(_ systemName: String, selected: Bool = false) -> some View {
+        Image(systemName: systemName + (selected ? ".fill" : ""))
+            .font(.title2)
+            .foregroundColor(selected ? .accentColor : .gray)
+    }
+
+    // Helper for subtitle text
+    private var subtitleText: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE h a"
+        return formatter.string(from: Date())
+    }
+
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+        ZStack(alignment: .bottom) {
+            Group {
+                switch selectedTab {
+                case .home:
+                    VStack(alignment: .leading, spacing: 0) {
+                        // Header
+                        Text("MoodMap")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .padding(.top, 32)
+                            .padding(.horizontal)
+
+                        // Subtitle (weekday, time, category)
+                        Text(subtitleText)
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .padding(.horizontal)
+                            .padding(.top, 4)
+                        Text("Finance / Education")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                            .padding(.horizontal)
+                            .padding(.bottom, 16)
+
+                        // Feed - fixed height for each card so all fit above tab bar
+                        VStack(spacing: 16) {
+                            ForEach(feedItems) { item in
+                                Button(action: {
+                                    // Action for video button
+                                }) {
+                                    HStack(spacing: 12) {
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(Color.gray.opacity(0.3))
+                                            .frame(width: 60, height: 40)
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(item.subtitle)
+                                                .font(.body)
+                                                .foregroundColor(.primary)
+                                            Text(item.title)
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                        }
+                                        Spacer()
+                                        Image(systemName: "music.note") // Placeholder for TikTok icon
+                                            .font(.title2)
+                                            .foregroundColor(.gray)
+                                    }
+                                    .frame(maxWidth: .infinity, minHeight: 120)
+                                    .padding()
+                                    .background(RoundedRectangle(cornerRadius: 12).stroke(Color.gray.opacity(0.4)))
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.bottom, tabBarHeight)
+                        Spacer(minLength: 0)
+                    }
+                case .feed:
+                    MoodFeedView()
+                        .padding(.bottom, tabBarHeight)
+                case .map:
+                    WeeklyMoodMapView()
+                        .padding(.bottom, tabBarHeight)
+                case .playlists:
+                    PlaylistsView()
+                        .padding(.bottom, tabBarHeight)
+                }
+            }
+            // Custom Tab Bar (fixed at bottom, not overlapped)
+            VStack(spacing: 0) {
+                Divider()
+                HStack {
+                    Button(action: { selectedTab = .home }) {
+                        tabBarIcon("house", selected: selectedTab == .home)
+                    }
+                    Spacer()
+                    Button(action: { selectedTab = .feed }) {
+                        tabBarIcon("square.grid.2x2", selected: selectedTab == .feed)
+                    }
+                    Spacer()
+                    Button(action: { selectedTab = .map }) {
+                        tabBarIcon("clock", selected: selectedTab == .map)
+                    }
+                    Spacer()
+                    Button(action: { selectedTab = .playlists }) {
+                        tabBarIcon("person", selected: selectedTab == .playlists)
                     }
                 }
-                .onDelete(perform: deleteItems)
-            }
-#if os(macOS)
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-#endif
-            .toolbar {
-#if os(iOS)
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-#endif
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+                .frame(height: tabBarHeight)
+                .padding(.horizontal)
+                .background(Color(.systemGray6))
             }
         }
     }
