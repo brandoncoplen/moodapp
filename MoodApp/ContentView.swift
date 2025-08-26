@@ -46,6 +46,8 @@ struct ContentView: View {
         return formatter.string(from: Date())
     }
 
+    @State private var tiktokAuthCode: String? = nil
+
     var body: some View {
         ZStack(alignment: .bottom) {
             Group {
@@ -138,6 +140,18 @@ struct ContentView: View {
                 .frame(height: tabBarHeight)
                 .padding(.horizontal)
                 .background(Color(.systemGray6))
+            }
+        }
+        .onOpenURL { url in
+            // Handle TikTok OAuth redirect
+            if url.scheme == "moodapp", url.host == "tiktok-oauth" {
+                if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+                   let code = components.queryItems?.first(where: { $0.name == "code" })?.value {
+                    tiktokAuthCode = code
+                    // For now, print the code for debugging
+                    print("TikTok OAuth code: \(code)")
+                    // TODO: Exchange code for access token
+                }
             }
         }
     }
